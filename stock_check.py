@@ -2,10 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 import os
 
-LINE_TOKEN = os.environ["JwSW6TpaRHlMdmS9zexWxXdGVlAirGisf4KxC7Bk5ShWFeBGIouGGXkabckGswR5CcSDy/Sa9PzfhJhQFWVDxb74Pmw/fexW8mhW9XG9xiL6ijyQGOnlkhOKb0dZu/Ttx0SWAyBx5GthbuAQLiF71QdB04t89/1O/w1cDnyilFU=
-"]
-USER_ID = os.environ["U98951ea1ff021258a48030786f0aa1d9
-"]
+# GitHub Secrets から読み込む
+LINE_TOKEN = os.environ["LINE_TOKEN"]
+USER_ID    = os.environ["USER_ID"]
 
 URL = "https://www.daimaru-matsuzakaya.jp/Search.html?keyword=%E4%B8%8B%E9%96%A2+%E6%99%82%E8%A8%88&limit=1&sort=0&page=4"
 
@@ -29,4 +28,3 @@ def check_stock():
 
 # GitHub Actions では1回だけ実行
 check_stock()
-
