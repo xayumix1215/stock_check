@@ -44,9 +44,10 @@ except FileNotFoundError:
 
 # 状態が変わった場合のみ通知
 if current_status != last_status:
-    send_line_message(f"在庫状況が変わりました：{current_status}")  # ←通知文
+    send_line_message(f"在庫状況が変わりました")  # ←通知文
     print(f"通知送信: {current_status}")
 
 # 現在の状態を保存
 with open(STATUS_FILE, "w", encoding="utf-8") as f:
     f.write(current_status)
+
