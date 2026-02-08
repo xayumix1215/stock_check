@@ -1,4 +1,3 @@
-import time
 import requests
 from bs4 import BeautifulSoup
 import os
@@ -23,9 +22,8 @@ def check_stock():
         send_line_message("❌ 在庫なしです")
         print("在庫なし")
     else:
-        print("✅ 在庫あり（通知なし）")
+        send_line_message("✅ 在庫あります！")
+        print("在庫あります！")
 
-# GitHub Actions では while True は使わず1回だけチェック
+# GitHub Actions では1回だけ実行
 check_stock()
-
-
