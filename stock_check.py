@@ -2,64 +2,60 @@ import requests
 from bs4 import BeautifulSoup
 import os
 
-# LINE情報（GitHub Secrets から取得）
 LINE_TOKEN = os.environ["LINE_TOKEN"]
 USER_ID = os.environ["USER_ID"]
 
-# チェックするURL
 URL = "https://www.daimaru-matsuzakaya.jp/Search.html?keyword=%E4%B8%8B%E9%96%A2+%E6%99%82%E8%A8%88&limit=1&sort=0&page=4"
 
-LAST_COUNT_FILE = "last_count.txt"
-
 def send_line_message(message):
-    url = "https://api.line.me/v2/bot/message/push"
-    headers = {
-        "Authorization": f"Bearer {LINE_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "to": USER_ID,
-        "messages": [{"type": "text", "text": message}]
-    }
-    requests.post(url, headers=headers, json=data)
+    try:
+        url = "https://api.line.me/v2/bot/message/push"
+        headers = {
+            "Authorization": f"Bearer {LINE_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "to": USER_ID,
+            "messages": [{"type": "text", "text": message}]
+        }
+        res = requests.post(url, headers=headers, json=data, timeout=10)
+        print("LINE送信ステータス:", res.status_code)
+    except Exception as e:
+        print("LINE送信エラー:", e)
 
-def get_last_count():
-    if os.path.exists(LAST_COUNT_FILE):
-        with open(LAST_COUNT_FILE, "r") as f:
-            return int(f.read().strip())
-    return None
+def load_last_status():
+    try:
+        with open("last_status.txt", "r") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return None
 
-def save_last_count(count):
-    with open(LAST_COUNT_FILE, "w") as f:
-        f.write(str(count))
+def save_last_status(status):
+    with open("last_status.txt", "w") as f:
+        f.write(status)
 
 def check_stock():
-    res = requests.get(URL)
-    soup = BeautifulSoup(res.text, "html.parser")
+    try:
+        res = requests.get(URL, timeout=10)
+        soup = BeautifulSoup(res.text, "html.parser")
+        page_text = soup.get_text().replace("\n", "").replace(" ", "")
 
-    page_text = soup.get_text()
-    current_count = page_text.count("在庫なし")
+        if "在庫なし" in page_text:
+            current_status = "在庫なし"
+        else:
+            current_status = "在庫あり"
 
-    last_count = get_last_count()
+        last_status = load_last_status()
 
-    # 初回実行時は保存だけ（通知しない）
-    if last_count is None:
-        save_last_count(current_count)
-        print(f"初回記録: 在庫なし {current_count}件")
-        return
+        if current_status != last_status:
+            send_line_message("在庫状況が変わりました")
+            save_last_status(current_status)
+            print("状態変化あり → 通知送信")
+        else:
+            print("状態変化なし")
 
-    # 個数が変わったら通知
-    if current_count != last_count:
-        send_line_message("在庫状況が変わりました")
-        print(f"変化あり: {last_count} → {current_count}")
-        save_last_count(current_count)
-    else:
-        print("変化なし")
+    except Exception as e:
+        print("在庫チェックエラー:", e)
 
+# 1回だけ実行
 check_stock()
-
-# 🔴 テスト用：必ず送られる通知
-send_line_message("【テスト】GitHub Actions から実行されました")
-
-# 状態も一応ログ出力（Actions の画面で見れる）
-print("現在の在庫状況:", current_status)
