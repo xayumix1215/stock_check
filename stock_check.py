@@ -57,3 +57,5 @@ def check_stock():
     save_count(count)
 
 check_stock()
+
+send_line_message("手動テスト通知\n" + URL)
