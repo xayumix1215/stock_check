@@ -58,4 +58,3 @@ def check_stock():
 
 check_stock()
 
-send_line_message("手動テスト通知\n" + URL)
