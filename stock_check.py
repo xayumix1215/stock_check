@@ -41,16 +41,16 @@ def check_stock():
 
     last_count = get_last_count()
 
-    # 初回は保存だけ
+    # 初回実行時は保存だけして通知しない
     if last_count is None:
         save_count(count)
         return
 
-    # 変化があったときだけ通知
+    # 数が変わったときだけ通知
     if count != last_count:
         message = (
             "在庫状況が変わりました\n"
-            f"{URL}"
+            f"URL：{URL}"
         )
         send_line_message(message)
 
