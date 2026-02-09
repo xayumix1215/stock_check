@@ -7,55 +7,53 @@ USER_ID = os.environ["USER_ID"]
 
 URL = "https://www.daimaru-matsuzakaya.jp/Search.html?keyword=%E4%B8%8B%E9%96%A2+%E6%99%82%E8%A8%88&limit=1&sort=0&page=4"
 
+STATUS_FILE = "last_status.txt"
+
 def send_line_message(message):
-    try:
-        url = "https://api.line.me/v2/bot/message/push"
-        headers = {
-            "Authorization": f"Bearer {LINE_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        data = {
-            "to": USER_ID,
-            "messages": [{"type": "text", "text": message}]
-        }
-        res = requests.post(url, headers=headers, json=data, timeout=10)
-        print("LINE送信ステータス:", res.status_code)
-    except Exception as e:
-        print("LINE送信エラー:", e)
-
-def load_last_status():
-    try:
-        with open("last_status.txt", "r") as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        return None
-
-def save_last_status(status):
-    with open("last_status.txt", "w") as f:
-        f.write(status)
+    url = "https://api.line.me/v2/bot/message/push"
+    headers = {
+        "Authorization": f"Bearer {LINE_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "to": USER_ID,
+        "messages":[{"type":"text","text": message}]
+    }
+    requests.post(url, headers=headers, json=data)
 
 def check_stock():
-    try:
-        res = requests.get(URL, timeout=10)
-        soup = BeautifulSoup(res.text, "html.parser")
-        page_text = soup.get_text().replace("\n", "").replace(" ", "")
+    res = requests.get(URL)
+    soup = BeautifulSoup(res.text, "html.parser")
 
-        if "在庫なし" in page_text:
-            current_status = "在庫なし"
-        else:
-            current_status = "在庫あり"
+    page_text = soup.get_text()
 
-        last_status = load_last_status()
+    # 商品名（最初に出てくる h3 を商品名と仮定）
+    product_name_tag = soup.find("h3")
+    product_name = product_name_tag.get_text(strip=True) if product_name_tag else "商品名不明"
 
-        if current_status != last_status:
-            send_line_message("在庫状況が変わりました")
-            save_last_status(current_status)
-            print("状態変化あり → 通知送信")
-        else:
-            print("状態変化なし")
+    # 在庫判定
+    if "在庫なし" in page_text:
+        current_status = "在庫なし"
+    else:
+        current_status = "在庫あり"
 
-    except Exception as e:
-        print("在庫チェックエラー:", e)
+    # 前回の状態を読む
+    if os.path.exists(STATUS_FILE):
+        with open(STATUS_FILE, "r", encoding="utf-8") as f:
+            last_status = f.read()
+    else:
+        last_status = ""
 
-# 1回だけ実行
+    # 状態が変わったら通知
+    if current_status != last_status:
+        message = (
+            "在庫状況が変わりました\n"
+            f"商品名：{product_name}\n"
+            f"URL：{URL}"
+        )
+        send_line_message(message)
+
+        with open(STATUS_FILE, "w", encoding="utf-8") as f:
+            f.write(current_status)
+
 check_stock()
