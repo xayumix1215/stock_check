@@ -3,7 +3,7 @@ name: 在庫確認
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/25 * * * *"
 
 jobs:
   check:
