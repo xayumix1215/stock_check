@@ -1,13 +1,14 @@
-name: Stock Check
+name: 在庫確認
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: "*/5 * * * *"
 
 jobs:
   check:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
 
@@ -15,13 +16,16 @@ jobs:
         uses: actions/cache@v3
         with:
           path: last_count.txt
-          key: stock-count-cache
+          key: stock-count
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
-      - run: pip install requests beautifulsoup4
+      - name: Install dependencies
+        run: |
+          pip install playwright requests beautifulsoup4
+          playwright install chromium
 
       - name: Run stock check
         env:
@@ -33,4 +37,4 @@ jobs:
         uses: actions/cache@v3
         with:
           path: last_count.txt
-          key: stock-count-cache
+          key: stock-count
