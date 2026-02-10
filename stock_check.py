@@ -5,8 +5,6 @@ import subprocess
 
 LINE_TOKEN = os.environ["LINE_TOKEN"]
 USER_ID = os.environ["USER_ID"]
-
-# 手動 or 自動 の判定
 EVENT_NAME = os.environ.get("GITHUB_EVENT_NAME", "")
 
 URL = "https://www.daimaru-matsuzakaya.jp/Search.html?keyword=%E4%B8%8B%E9%96%A2+%E6%99%82%E8%A8%88&limit=1&sort=0&page=4"
@@ -43,23 +41,18 @@ def save_and_commit_count(count):
 def check_stock():
     res = requests.get(URL)
     soup = BeautifulSoup(res.text, "html.parser")
+    text = soup.get_text()
 
-    page_text = soup.get_text()
-    count = page_text.count("在庫なし")
-
+    count = text.count("在庫なし")
     last_count = get_last_count()
 
-    # 🔹 手動実行は必ず通知
+    # 🔹 手動は必ず通知
     if EVENT_NAME == "workflow_dispatch":
-        send_line_message(
-            "【手動確認】在庫チェックしました\n" + URL
-        )
+        send_line_message("【手動確認】在庫チェックしました\n" + URL)
 
-    # 🔹 自動実行は変化があった時だけ通知
-    elif last_count is not None and count != last_count:
-        send_line_message(
-            "在庫状況が変わりました\n" + URL
-        )
+    # 🔹 自動は「増えた時だけ」通知
+    elif last_count is not None and count > last_count:
+        send_line_message("在庫状況が変わりました\n" + URL)
 
     save_and_commit_count(count)
 
