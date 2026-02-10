@@ -35,7 +35,7 @@ def save_and_commit_count(count):
     subprocess.run(["git", "config", "user.name", "github-actions"])
     subprocess.run(["git", "config", "user.email", "github-actions@github.com"])
     subprocess.run(["git", "add", STATUS_FILE])
-    subprocess.run(["git", "commit", "-m", "update stock count"], check=False)
+    subprocess.run(["git", "commit", "-m", "update count"], check=False)
     subprocess.run(["git", "push"], check=False)
 
 def check_stock():
@@ -46,11 +46,11 @@ def check_stock():
     count = text.count("在庫なし")
     last_count = get_last_count()
 
-    # 🔹 手動は必ず通知
+    # 手動は必ず通知
     if EVENT_NAME == "workflow_dispatch":
         send_line_message("【手動確認】在庫チェックしました\n" + URL)
 
-    # 🔹 自動は「増えた時だけ」通知
+    # 「在庫なし」という文字が増えたら通知
     elif last_count is not None and count > last_count:
         send_line_message("在庫状況が変わりました\n" + URL)
 
