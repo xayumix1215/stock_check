@@ -1,11 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 import os
-import subprocess
 
 LINE_TOKEN = os.environ["LINE_TOKEN"]
 USER_ID = os.environ["USER_ID"]
-EVENT_NAME = os.environ.get("GITHUB_EVENT_NAME", "")
 
 URL = "https://www.daimaru-matsuzakaya.jp/Search.html?keyword=%E4%B8%8B%E9%96%A2+%E6%99%82%E8%A8%88&limit=1&sort=0&page=4"
 STATUS_FILE = "last_count.txt"
@@ -22,38 +20,42 @@ def send_line_message(message):
     }
     requests.post(url, headers=headers, json=data)
 
-def get_last_count():
-    if not os.path.exists(STATUS_FILE):
-        return None
-    with open(STATUS_FILE, "r") as f:
-        return int(f.read().strip())
+def load_last_count():
+    try:
+        with open(STATUS_FILE, "r") as f:
+            return int(f.read().strip())
+    except:
+        return 0
 
-def save_and_commit_count(count):
+def save_count(count):
     with open(STATUS_FILE, "w") as f:
         f.write(str(count))
 
-    subprocess.run(["git", "config", "user.name", "github-actions"])
-    subprocess.run(["git", "config", "user.email", "github-actions@github.com"])
-    subprocess.run(["git", "add", STATUS_FILE])
-    subprocess.run(["git", "commit", "-m", "update count"], check=False)
-    subprocess.run(["git", "push"], check=False)
-
 def check_stock():
-    res = requests.get(URL)
+    res = requests.get(URL, timeout=20)
     soup = BeautifulSoup(res.text, "html.parser")
+
     text = soup.get_text()
+    current_count = text.count("在庫なし")
+    last_count = load_last_count()
 
-    count = text.count("在庫なし")
-    last_count = get_last_count()
+    # 🔔 手動実行は必ず通知
+    if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
+        send_line_message(
+            "【手動確認】\n"
+            "在庫ページを確認しました。\n"
+            f"{URL}"
+        )
+        save_count(current_count)
+        return
 
-    # 手動は必ず通知
-    if EVENT_NAME == "workflow_dispatch":
-        send_line_message("【手動確認】在庫チェックしました\n" + URL)
+    # 🔔 在庫なしが増えたら通知
+    if current_count > last_count:
+        send_line_message(
+            "在庫状況が変わりました\n"
+            f"{URL}"
+        )
 
-    # 「在庫なし」という文字が増えたら通知
-    elif last_count is not None and count > last_count:
-        send_line_message("在庫状況が変わりました\n" + URL)
-
-    save_and_commit_count(count)
+    save_count(current_count)
 
 check_stock()
