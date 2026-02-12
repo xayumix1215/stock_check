@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 LINE_TOKEN = os.environ["LINE_TOKEN"]
 USER_ID = os.environ["USER_ID"]
 
-URL = "https://www.daimaru-matsuzakaya.jp/Search.html?keyword=%E4%B8%8B%E9%96%A2+%E6%99%82%E8%A8%88"
+URL = "https://www.daimaru-matsuzakaya.jp/Search.html?keyword=%E4%B8%8B%E9%96%A2+%E6%99%82%E8%A8%88&limit=1&sort=0&page=4"
 
 def send_line(message):
     requests.post(
@@ -38,16 +38,13 @@ def get_current_count():
         )
         page = browser.new_page()
 
-        print("ページ読み込み開始")
-        page.goto(URL, timeout=60000)  # networkidle削除
+        page.goto(URL, timeout=60000)
+        page.wait_for_timeout(8000)
 
-        page.wait_for_timeout(8000)  # 強制待機8秒
+        count = page.locator("text=在庫なし").count()
 
-        content = page.content()
         browser.close()
 
-    count = content.count("在庫なし")
-    print("取得在庫なし数:", count)
     return count
 
 print("===== 実行開始 =====")
@@ -62,13 +59,16 @@ if last_count is None:
     save_count(current_count)
 
 elif current_count > last_count:
-    send_line(f"在庫なし増加\n前回:{last_count}\n今回:{current_count}")
+    message = f"""【在庫チェック】
+在庫なし表示数：{current_count}
+
+{URL}
+"""
+    send_line(message)
     save_count(current_count)
 
 elif current_count < last_count:
-    send_line(f"在庫復活\n前回:{last_count}\n今回:{current_count}")
     save_count(current_count)
 
 else:
     print("変化なし")
-
