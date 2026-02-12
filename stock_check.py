@@ -7,6 +7,9 @@ USER_ID = os.environ["USER_ID"]
 
 URL = "https://www.daimaru-matsuzakaya.jp/Search.html?keyword=%E4%B8%8B%E9%96%A2+%E6%99%82%E8%A8%88&limit=1&sort=0&page=4"
 
+# 👇 これが重要（手動かどうか）
+EVENT_NAME = os.environ.get("GITHUB_EVENT_NAME")
+
 def send_line(message):
     requests.post(
         "https://api.line.me/v2/bot/message/push",
@@ -54,12 +57,11 @@ current_count = get_current_count()
 
 print("前回:", last_count)
 print("今回:", current_count)
+print("イベント:", EVENT_NAME)
 
-if last_count is None:
-    save_count(current_count)
-
-elif current_count > last_count:
-    message = f"""【在庫チェック】
+# 🔥 手動実行なら必ず通知
+if EVENT_NAME == "workflow_dispatch":
+    message = f"""【手動実行】
 在庫なし表示数：{current_count}
 
 {URL}
@@ -67,8 +69,21 @@ elif current_count > last_count:
     send_line(message)
     save_count(current_count)
 
-elif current_count < last_count:
-    save_count(current_count)
-
+# 🔥 自動実行時は増えた時だけ通知
 else:
-    print("変化なし")
+    if last_count is None:
+        save_count(current_count)
+
+    elif current_count > last_count:
+        message = f"""【在庫増加】
+前回:{last_count}
+今回:{current_count}
+
+{URL}
+"""
+        send_line(message)
+        save_count(current_count)
+
+    else:
+        save_count(current_count)
+        print("変化なし")
