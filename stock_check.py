@@ -71,3 +71,4 @@ elif current_count < last_count:
 
 else:
     print("変化なし")
+
