@@ -10,7 +10,7 @@ LAST_COUNT_FILE = "last_count.txt"
 
 LINE_TOKEN = os.getenv("LINE_TOKEN")
 USER_ID = os.getenv("USER_ID")
-
+GROUP_ID = os.getenv("GROUP_ID")
 
 # ==========================
 # 在庫なし数を取得
@@ -104,3 +104,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
