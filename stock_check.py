@@ -57,7 +57,7 @@ def send_line(message):
     }
 
     data = {
-        "to": USER_ID,
+        "to": GROUP_ID,
         "messages": [
             {
                 "type": "text",
@@ -104,4 +104,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
