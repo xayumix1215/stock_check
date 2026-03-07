@@ -27,7 +27,7 @@ jobs:
       - name: Run stock check
         env:
           LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
-          USER_ID: ${{ secrets.USER_ID }}
+          GROUP_ID: ${{ secrets.GROUP_ID }}
         run: python stock_check.py
 
       - name: Commit last_count.txt
